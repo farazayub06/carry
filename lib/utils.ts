@@ -120,7 +120,7 @@ export function lightestMember(members: Member[], tasks: Task[], excludeId?: str
 /* ------------------------------ Colors ----------------------------------- */
 
 /** One color per teammate (avatar + workload bar), assigned in join order. */
-export const MEMBER_COLORS = ["#2563eb", "#d97706", "#059669", "#db2777", "#7c3aed", "#0891b2"];
+export const MEMBER_COLORS = ["#9f06f8", "#d97706", "#059669", "#db2777", "#7c3aed", "#0891b2"];
 
 export function colorFor(index: number): string {
   return MEMBER_COLORS[index % MEMBER_COLORS.length];
