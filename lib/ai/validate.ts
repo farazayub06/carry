@@ -35,21 +35,30 @@ export function extractJson(text: string): unknown {
   if (start === -1) return null;
 
   // Walk to the brace that closes the first "{", ignoring braces inside strings,
-  // so trailing chatter after the object can't confuse us.
+  // so trailing chatter after the object can't confuse us. Raw newlines/tabs
+  // inside strings (invalid JSON, but models write them in multi-line messages)
+  // are escaped on the way.
+  let json = "";
   let depth = 0;
   let inString = false;
   let escaped = false;
   for (let i = start; i < cleaned.length; i++) {
-    const ch = cleaned[i];
+    let ch = cleaned[i];
     if (inString) {
       if (escaped) escaped = false;
       else if (ch === "\\") escaped = true;
       else if (ch === '"') inString = false;
+      else if (ch === "\n") ch = "\\n";
+      else if (ch === "\r") ch = "\\r";
+      else if (ch === "\t") ch = "\\t";
     } else if (ch === '"') inString = true;
     else if (ch === "{") depth++;
-    else if (ch === "}" && --depth === 0) {
+    else if (ch === "}") depth--;
+    json += ch;
+
+    if (depth === 0) {
       try {
-        return JSON.parse(cleaned.slice(start, i + 1));
+        return JSON.parse(json);
       } catch {
         return null;
       }
