@@ -43,19 +43,38 @@
 
 import { StoreError, type DataStore } from "./store";
 
+import { buildDemoState } from "../mock";
+import type { ProjectState } from "../types";
+
+// Our "database": a Map from project id → everything in that project
+const g = globalThis as unknown as { __carryDb?: Map<string, ProjectState> };
+
+function db(): Map<string, ProjectState> {
+  if (!g.__carryDb) {
+    g.__carryDb = new Map();
+    const demo = buildDemoState();
+    g.__carryDb.set(demo.project.id, demo); // load the demo project
+  }
+  return g.__carryDb;
+}
+
 const todo = (what: string): never => {
   throw new StoreError(`TODO (Backend): memory store ${what} not implemented yet`, 501);
 };
 
 export const memoryStore: DataStore = {
-  // TODO: loop over db().values(), return a copy of the one whose project.share_code === code, else null
-  async getStateByCode() {
-    return todo("getStateByCode");
+  async getStateByCode(code) {
+    for (const state of db().values()) {          // go through every project
+      if (state.project.share_code === code) {    // is this the one?
+        return structuredClone(state);            // yes → return a copy
+      }
+    }
+    return null;                                  // checked them all, none matched
   },
 
-  // TODO: db().get(projectId), copy, or null
-  async getStateById() {
-    return todo("getStateById");
+  async getStateById(projectId) {
+    const state = db().get(projectId);         // look it up in the Map
+    return state ? structuredClone(state) : null; // found → return a copy; not found → null
   },
 
   // TODO: new project (newId(), newShareCode(), created_at now), members from
