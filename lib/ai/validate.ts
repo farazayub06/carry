@@ -20,9 +20,9 @@
  * good thing to mention when judges ask about responsible AI.
  *
  * TODO (AI):
- *   [ ] extractJson
- *   [ ] askJson with one retry
- *   [ ] the small cleaners at the bottom (used by every validator)
+ *   [x] extractJson
+ *   [x] askJson with one retry
+ *   [x] the small cleaners at the bottom (used by every validator)
  */
 
 import "server-only";
@@ -30,9 +30,32 @@ import { askModel } from "./client";
 
 /** Pull the first JSON object out of a model reply. null if there isn't a valid one. */
 export function extractJson(text: string): unknown {
-  // TODO
-  void text;
-  return null;
+  const cleaned = text.replace(/```(?:json)?/gi, "");
+  const start = cleaned.indexOf("{");
+  if (start === -1) return null;
+
+  // Walk to the brace that closes the first "{", ignoring braces inside strings,
+  // so trailing chatter after the object can't confuse us.
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < cleaned.length; i++) {
+    const ch = cleaned[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inString = false;
+    } else if (ch === '"') inString = true;
+    else if (ch === "{") depth++;
+    else if (ch === "}" && --depth === 0) {
+      try {
+        return JSON.parse(cleaned.slice(start, i + 1));
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null; // never closed → truncated reply
 }
 
 /** Ask for JSON, validate it, retry once. null = give up → caller uses its fallback. */
@@ -42,32 +65,36 @@ export async function askJson<T>(
   validate: (raw: unknown) => T | null,
   maxTokens?: number,
 ): Promise<T | null> {
-  // TODO: loop twice: askModel → if null return null → extractJson → validate → return if valid
-  const text = await askModel(system, user, maxTokens);
-  if (text === null) return null;
-  return validate(extractJson(text));
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const prompt =
+      attempt === 1 ? user : `${user}\n\nReply with ONLY the JSON object described above. No prose, no code fences.`;
+    const text = await askModel(system, prompt, maxTokens);
+    if (text === null) return null; // AI is off → don't burn another 25s retrying
+
+    const result = validate(extractJson(text));
+    if (result !== null) return result;
+    console.warn(`[ai] invalid JSON on attempt ${attempt}`);
+  }
+  return null;
 }
 
-/* ---------- small cleaners every validator uses (TODO: implement) ---------- */
+/* ---------- small cleaners every validator uses ---------- */
 
 /** Is it a plain object (not null, not an array)? */
 export const isObj = (x: unknown): x is Record<string, unknown> =>
   typeof x === "object" && x !== null && !Array.isArray(x);
 
-/** TODO: a trimmed string capped at `max` chars, or "" if it isn't a string. */
-export const str = (x: unknown, max = 300): string => {
-  void max;
-  return typeof x === "string" ? x : "";
-};
+/** A trimmed string capped at `max` chars, or "" if it isn't a string. */
+export const str = (x: unknown, max = 300): string =>
+  typeof x === "string" ? x.trim().slice(0, max) : "";
 
-/** TODO: an array of non-empty cleaned strings, at most `maxItems`. */
-export const strList = (x: unknown, maxItems = 12): string[] => {
-  void maxItems;
-  return Array.isArray(x) ? x.map((s) => str(s)) : [];
-};
+/** An array of non-empty cleaned strings, at most `maxItems`. */
+export const strList = (x: unknown, maxItems = 12): string[] =>
+  Array.isArray(x) ? x.map((s) => str(s)).filter(Boolean).slice(0, maxItems) : [];
 
-/** TODO: an integer clamped to 1–5; anything invalid → 2. */
+/** An integer clamped to 1–5; anything invalid → 2. */
 export const effort = (x: unknown): number => {
-  void x;
-  return 2;
+  const n = typeof x === "string" ? Number(x) : x;
+  if (typeof n !== "number" || !Number.isFinite(n)) return 2;
+  return Math.min(5, Math.max(1, Math.round(n)));
 };
