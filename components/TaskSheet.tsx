@@ -1,68 +1,112 @@
 "use client";
-/**
- * components/TaskSheet.tsx — the bottom sheet that opens when you tap a task
- * ---------------------------------------------------------------------------
- * OWNER: Frontend (UI). Calls Backend routes.
- *
- * A "bottom sheet" slides up from the bottom of the screen: the most
- * thumb-friendly pattern on a phone. Dark backdrop behind it; tapping the
- * backdrop closes it (and stopPropagation on the sheet itself so taps inside
- * don't close it).
- *
- * SHOW: title, description, <StatusPill>, owner, OUR deadline, effort.
- *
- * ACTIONS depend on WHO you are relative to the task (me = current member):
- *
- *   nobody owns it         → "Claim this task"
- *                            POST /api/tasks/<id>/claim   { member_id: me.id }
- *   someone else owns it   → "Take it over from Sam"   (same claim route;
- *                            this is how a teammate picks up a ghost's work)
- *   you own it             → status buttons: In progress / Stuck / Done
- *                            POST /api/tasks/<id>/status  { member_id, status }
- *                          + "I'm stuck, help me"
- *                            POST /api/tasks/<id>/stuck → StuckResult
- *                            → show the substeps as a numbered list + `reason`
- *   done + not yours +     → "Confirm it's done 👍"
- *   not confirmed yet         POST /api/tasks/<id>/confirm { member_id }
- *   done + confirmed       → "✓ Confirmed by Jordan"
- *   me is null             → "Pick your name on the join screen to update tasks"
- *
- * After ANY action: call onChanged() so the dashboard re-fetches the data.
- *
- * TODO (Frontend):
- *   [ ] Sheet + backdrop layout (fixed inset-0, rounded top corners, max-h-[85vh] scroll)
- *   [ ] The action logic above
- *   [ ] Loading + error states on each button
- */
 
-import type { Member, Task } from "@/lib/types";
+import type { Member, Task, TaskStatus } from "@/lib/types";
+import { StatusPill, STATUS_LABEL } from "@/components/StatusPill";
+import { formatDay } from "@/lib/utils";
+
+const OPEN_STATUSES: TaskStatus[] = ["not_started", "in_progress", "stuck"];
 
 export function TaskSheet({
   task,
-  members,
-  me,
+  owner,
+  meId,
+  onClaim,
+  onStatus,
+  onConfirm,
   onClose,
-  onChanged,
 }: {
   task: Task;
-  members: Member[];
-  me: Member | null; // the current user on this phone (null = hasn't joined)
+  owner: Member | undefined;
+  meId: string | null;
+  onClaim: () => void;
+  onStatus: (status: TaskStatus) => void;
+  onConfirm: () => void;
   onClose: () => void;
-  onChanged: () => void; // call after any successful action → dashboard reloads
 }) {
-  const owner = members.find((m) => m.id === task.owner_id) ?? null;
+  const canClaim = meId !== null && !task.owner_id;
+  const isMine = meId !== null && task.owner_id === meId;
+  const canConfirm =
+    meId !== null &&
+    task.status === "done" &&
+    task.confirmed_by === null &&
+    task.owner_id !== null &&
+    task.owner_id !== meId;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40" onClick={onClose}>
-      <div className="w-full max-w-md rounded-t-3xl bg-card p-5" onClick={(e) => e.stopPropagation()}>
-        {/* TODO: real sheet. Placeholder: */}
-        <p className="font-bold">{task.title}</p>
-        <p className="text-sm text-muted">
-          Owner: {owner?.name ?? "nobody"} · You: {me?.name ?? "not joined"}
-        </p>
-        <button className="mt-4 text-sm underline" onClick={onChanged}>
-          (TODO actions)
-        </button>
+    <div className="fixed inset-0 z-50 flex items-center bg-black/40" onClick={onClose}>
+      <div
+        className="mx-auto max-h-[85dvh] w-full max-w-md space-y-4 overflow-y-auto rounded-2xl bg-card p-5"        
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="text-xl font-bold">{task.title}</h2>
+          <button onClick={onClose} className="px-2 text-2xl leading-none text-muted">
+            ×
+          </button>
+        </div>
+
+        <StatusPill task={task} />
+
+        <p className="text-sm">{task.description}</p>
+
+        <dl className="grid grid-cols-3 gap-2 text-sm">
+          <div>
+            <dt className="text-muted">Owner</dt>
+            <dd className="font-medium">{owner ? owner.name : "Unclaimed"}</dd>
+          </div>
+          <div>
+            <dt className="text-muted">Due</dt>
+            <dd className="font-medium">{formatDay(task.internal_due_at)}</dd>
+          </div>
+          <div>
+            <dt className="text-muted">Effort</dt>
+            <dd className="font-medium">{task.effort} / 5</dd>
+          </div>
+        </dl> 
+        {canClaim && (
+          <button
+            onClick={onClaim}
+            className="min-h-12 w-full rounded-xl bg-brand font-medium text-brand-foreground"
+          >
+            Claim this task
+          </button>
+        )}
+
+        {isMine && task.status !== "done" && (
+          <div className="space-y-2">
+            <p className="text-sm text-muted">Update your status</p>
+            <div className="grid grid-cols-3 gap-2">
+              {OPEN_STATUSES.map((status) => (
+                <button
+                  key={status}
+                  onClick={() => onStatus(status)}
+                  className={`min-h-12 rounded-xl border px-2 text-sm font-medium ${
+                    task.status === status
+                      ? "border-brand bg-brand/10"
+                      : "border-border bg-card"
+                  }`}
+                >
+                  {STATUS_LABEL[status]}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => onStatus("done")}
+              className="min-h-12 w-full rounded-xl bg-done font-medium text-white"
+            >
+              Mark done
+            </button>
+          </div>
+        )}
+
+        {canConfirm && (
+          <button
+            onClick={onConfirm}
+            className="min-h-12 w-full rounded-xl bg-done font-medium text-white"
+          >
+            Confirm this is done
+          </button>
+        )}
       </div>
     </div>
   );
