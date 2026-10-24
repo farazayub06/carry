@@ -1,29 +1,4 @@
-/**
- * lib/ai/validate.ts — never trust raw AI output
- * ---------------------------------------------------------------------------
- * OWNER: AI
- *
- * LLMs sometimes wrap JSON in ```code fences```, add a sentence before it,
- * invent fields, or return effort: "medium" instead of a number. This file
- * is the safety layer between the model and our app:
- *
- *   1. extractJson(text)  → find the first {...} in the reply and JSON.parse it
- *                           (strip ```json fences first; return null if it fails)
- *   2. a validator per feature (written in plan.ts, stuck.ts, …) that checks
- *      the shape and CLEANS values (trim strings, clamp effort to 1–5…),
- *      returning null if it's unusable
- *   3. askJson(system, user, validate) → askModel → extractJson → validate,
- *      RETRY ONCE if invalid, return null if both attempts fail
- *      (and return null immediately if askModel returned null, since AI is off)
- *
- * This is the "the AI never breaks the demo" guarantee from the PRD, and a
- * good thing to mention when judges ask about responsible AI.
- *
- * TODO (AI):
- *   [x] extractJson
- *   [x] askJson with one retry
- *   [x] the small cleaners at the bottom (used by every validator)
- */
+/** JSON extraction, validation with one retry, and field cleaners for model output. */
 
 import "server-only";
 import { askModel } from "./client";
@@ -86,8 +61,6 @@ export async function askJson<T>(
   }
   return null;
 }
-
-/* ---------- small cleaners every validator uses ---------- */
 
 /** Is it a plain object (not null, not an array)? */
 export const isObj = (x: unknown): x is Record<string, unknown> =>

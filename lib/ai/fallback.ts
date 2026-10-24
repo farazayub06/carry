@@ -1,22 +1,4 @@
-/**
- * lib/ai/fallback.ts — rule-based answers for when the AI is off or fails
- * ---------------------------------------------------------------------------
- * OWNER: AI
- *
- * Every AI feature has a "simple but reliable" twin here. Used when:
- *   - there's no API key yet (everyone's laptop on day one)
- *   - the API times out or returns broken JSON twice
- *   - the venue Wi-Fi dies during judging
- *
- * Keep them predictable. Tag every result source: "fallback" so the UI can
- * say "AI unavailable, so here's a starter plan".
- *
- * TODO (AI): implement all four. Ideas below each one.
- *   [x] fallbackPlan
- *   [x] fallbackStuck
- *   [x] fallbackUpdate
- *   [x] fallbackRubricCheck
- */
+/** Rule-based versions of every AI feature, used when the model is unavailable or returns bad output. */
 
 import type { DraftTask, Member, PlanResult, ProjectState, RubricCheckResult, StuckResult, Task } from "../types";
 import { daysUntil, lightestMember, relativeDay } from "../utils";
@@ -80,15 +62,7 @@ export function rubricLines(rubric: string): string[] {
     .slice(0, 12);
 }
 
-/**
- * A generic plan. IDEAS:
- *   - detect the assignment type from keywords (slides/presentation, code/app,
- *     survey/data) and add matching tasks
- *   - always start with "Break down the prompt and rubric", end with
- *     "Final review against the rubric"
- *   - spread internal deadlines evenly from now to (due date − 2 days)
- *   - rubric_items = the rubric split by line
- */
+/** Keyword-matched starter plan with deadlines spread evenly up to 2 days before the due date. */
 export function fallbackPlan(assignment: string, rubric: string, dueAt: string): PlanResult {
   const middle = PLAN_TEMPLATES.find((t) => t.keywords.test(assignment))?.tasks ?? GENERIC_TASKS;
   const ideas: TaskIdea[] = [
@@ -133,18 +107,12 @@ export function fallbackStuck(task: Task, members: Member[], tasks: Task[]): Stu
   };
 }
 
-/**
- * A short group-chat update built from a template, e.g.
- *   "📋 PSYCH 2220: 3/9 tasks done, due in 12 days.
- *    • Jordan: Lit review slides (in 3 days)
- *    • Priya: Analyze survey results (in 5 days)
- *    🙋 3 tasks still up for grabs"
- */
+/** Template-based group chat update: progress, who is working on what, and open tasks. */
 export function fallbackUpdate(state: ProjectState): string {
   const { project, members, tasks } = state;
   const done = tasks.filter((t) => t.status === "done").length;
   const dueIn = daysUntil(project.due_at) < 0 ? `was due ${relativeDay(project.due_at)}` : `due ${relativeDay(project.due_at)}`;
-  const lines = [`📋 ${project.name}: ${done}/${tasks.length} tasks done, ${dueIn}.`];
+  const lines = [`${project.name}: ${done}/${tasks.length} tasks done, ${dueIn}.`];
 
   const nameOf = new Map(members.map((m) => [m.id, m.name]));
   const active = tasks
@@ -152,13 +120,13 @@ export function fallbackUpdate(state: ProjectState): string {
     .sort((a, b) => a.internal_due_at.localeCompare(b.internal_due_at))
     .slice(0, 5);
   for (const t of active) {
-    const flag = t.status === "stuck" ? " ⚠️ stuck" : "";
+    const flag = t.status === "stuck" ? " (stuck)" : "";
     lines.push(`• ${nameOf.get(t.owner_id!) ?? "Someone"}: ${t.title} (${relativeDay(t.internal_due_at)})${flag}`);
   }
 
   const open = tasks.filter((t) => !t.owner_id && t.status !== "done").length;
-  if (open > 0) lines.push(`🙋 ${open} task${open === 1 ? "" : "s"} still up for grabs`);
-  else if (tasks.length > 0 && done === tasks.length) lines.push("🎉 Everything's done!");
+  if (open > 0) lines.push(`${open} task${open === 1 ? "" : "s"} still up for grabs`);
+  else if (tasks.length > 0 && done === tasks.length) lines.push("Everything's done!");
 
   return lines.join("\n");
 }

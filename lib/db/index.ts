@@ -1,18 +1,4 @@
-/**
- * lib/db/index.ts — picks WHICH database to use. Import `store` from here, never directly.
- * ---------------------------------------------------------------------------
- * OWNER: Backend
- *
- *   import { store } from "@/lib/db";
- *   const state = await store.getStateByCode("demo42");
- *
- * Decision rule (no code changes needed to switch):
- *   - SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY set  → real Postgres (supabase.ts)
- *   - otherwise                                      → in-memory demo data (memory.ts)
- *
- * SERVER ONLY. This module reads secret env vars; never import it from a
- * "use client" file. The browser talks to the API routes instead (lib/api.ts).
- */
+/** Uses the Supabase store when its env vars are set, otherwise the in-memory store. */
 
 import "server-only";
 import { memoryStore } from "./memory";

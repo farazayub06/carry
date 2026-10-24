@@ -1,11 +1,4 @@
-/**
- * GET /api/projects/[id]/update-message — AI-written group chat update
- * ---------------------------------------------------------------------------
- * OWNER: Backend (route) · AI lead owns lib/ai/updateMessage.ts
- * CALLED BY: the "📣 Copy update" button on the dashboard
- * RETURNS: { message: string, source: "ai" | "fallback" }
- * The frontend copies `message`; a student pastes it into Snapchat/iMessage.
- */
+/** GET /api/projects/[id]/update-message: group chat progress update. */
 
 import { store } from "@/lib/db";
 import { writeUpdate } from "@/lib/ai/updateMessage";

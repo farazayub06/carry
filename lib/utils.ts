@@ -1,15 +1,8 @@
-/**
- * lib/utils.ts — small helpers used everywhere (ids, dates, workload math)
- * ---------------------------------------------------------------------------
- * OWNER: shared (Backend). Announce in the chat before changing.
- * Pure functions with no side effects: safe on the server AND in the browser.
- */
+/** IDs, dates, deadline rules, task state, and workload math. */
 
 import type { Member, Task } from "./types";
 
 const DAY_MS = 24 * 60 * 60 * 1000; // one day in milliseconds
-
-/* ----------------------------- IDs & codes ------------------------------- */
 
 /** A random UUID, the internal label for every saved thing. */
 export function newId(): string {
@@ -25,8 +18,6 @@ export function newShareCode(): string {
   }
   return code;
 }
-
-/* ------------------------------- Dates ----------------------------------- */
 
 /** ISO string for "n days from now" at 11:59 PM (negative = past). Keeps the demo fresh. */
 export function daysFromNow(n: number): string {
@@ -56,9 +47,8 @@ export function relativeDay(iso: string): string {
 }
 
 /**
- * THE INTERNAL DEADLINE RULE (PRD): our deadlines must be ≥ 2 days BEFORE the
- * real due date (buffer to assemble everything), and never in the past.
- * The AI is told this rule, but we ENFORCE it in code because AI can slip.
+ * Internal deadlines must be at least 2 days before the real due date (time to
+ * assemble everything) and never in the past. Enforced in code, not just in the AI prompt.
  */
 export function clampInternalDeadline(iso: string, realDueIso: string): string {
   const latestAllowed = new Date(realDueIso).getTime() - 2 * DAY_MS; // 2 days before due
@@ -69,8 +59,6 @@ export function clampInternalDeadline(iso: string, realDueIso: string): string {
   t = Math.max(t, Math.min(earliestAllowed, latestAllowed)); // in the past → push it later
   return new Date(t).toISOString();
 }
-
-/* ----------------------------- Task state -------------------------------- */
 
 /** Past its internal deadline and not done → red flag. */
 export function isOverdue(task: Task): boolean {
@@ -84,8 +72,6 @@ export function isAtRisk(task: Task): boolean {
   if (task.status === "stuck") return true;
   return daysUntil(task.internal_due_at) <= 1 && task.status === "not_started";
 }
-
-/* ---------------------------- Workload math ------------------------------ */
 
 export interface Workload {
   member: Member;
@@ -116,8 +102,6 @@ export function lightestMember(members: Member[], tasks: Task[], excludeId?: str
       .sort((a, b) => a.effort - b.effort)[0]?.member ?? null
   );
 }
-
-/* ------------------------------ Colors ----------------------------------- */
 
 /** One color per teammate (avatar + workload bar), assigned in join order. */
 export const MEMBER_COLORS = ["#9f06f8", "#d97706", "#059669", "#db2777", "#7c3aed", "#0891b2"];

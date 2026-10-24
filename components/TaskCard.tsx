@@ -1,6 +1,6 @@
 "use client";
 
-import type { Member, Task, TaskStatus } from "@/lib/types";
+import type { Member, Task } from "@/lib/types";
 import { isOverdue, relativeDay } from "@/lib/utils";
 import { StatusPill } from "@/components/StatusPill";
 

@@ -1,11 +1,4 @@
-/**
- * GET /api/projects/[id]/receipt — the contribution receipt
- * ---------------------------------------------------------------------------
- * OWNER: Backend
- * CALLED BY: the receipt screen
- * RETURNS: { project, rows: ReceiptRow[], generated_at: ISO string }
- * The math lives in lib/db/receipt.ts.
- */
+/** GET /api/projects/[id]/receipt: per-member contribution rows. */
 
 import { store } from "@/lib/db";
 import { computeReceipt } from "@/lib/db/receipt";

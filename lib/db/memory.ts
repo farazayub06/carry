@@ -1,31 +1,9 @@
-/**
- * lib/db/memory.ts — IN-MEMORY database (zero setup, for local dev + backup demo)
- * ---------------------------------------------------------------------------
- * OWNER: Backend
- *
- * Implements the DataStore interface (lib/db/store.ts) with plain JavaScript
- * objects in RAM. Starts with the demo project from lib/mock.ts loaded, so
- * /p/demo42 works the moment anyone runs `npm run dev`.
- *
- * LIMITS (why we still need Supabase for the real demo):
- *   - data disappears when the dev server restarts
- *   - on Vercel, each serverless function has its own memory, so two phones
- *     wouldn't see each other's changes
- *
- * RULES (same for supabase.ts):
- *   - every change to a task ALSO adds an Event. The receipt is computed from events.
- *   - return COPIES (structuredClone) so callers can't accidentally change stored data
- *   - throw StoreError for bad input / not found; API routes turn it into an error response
- */
+/** In-memory DataStore seeded with the demo project. Used when Supabase isn't configured. */
 
 import { buildDemoState } from "../mock";
 import type { CreateProjectInput, DraftTask, EventType, ProjectState, Task, TaskStatus } from "../types";
 import { clampInternalDeadline, colorFor, newId, newShareCode } from "../utils";
 import { StoreError, type DataStore } from "./store";
-
-/* ------------------------------------------------------------------------- */
-/*  The "database" itself                                                    */
-/* ------------------------------------------------------------------------- */
 
 // A Map from project id → everything in that project.
 // Stored on globalThis so it survives Next.js hot-reloading when you save a file.
@@ -39,10 +17,6 @@ function db(): Map<string, ProjectState> {
   }
   return g.__carryDb;
 }
-
-/* ------------------------------------------------------------------------- */
-/*  Small helpers used by the functions below                                */
-/* ------------------------------------------------------------------------- */
 
 /** Find a task anywhere in the database, plus the project it belongs to. */
 function findTask(taskId: string): { state: ProjectState; task: Task } {
@@ -78,10 +52,6 @@ function logEvent(
     created_at: new Date().toISOString(),
   });
 }
-
-/* ------------------------------------------------------------------------- */
-/*  The DataStore functions (what the API routes call)                       */
-/* ------------------------------------------------------------------------- */
 
 export const memoryStore: DataStore = {
   /** Look up a project by its share code (the code in the link). */

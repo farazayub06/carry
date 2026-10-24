@@ -3,39 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { buildDemoState } from "@/lib/mock";
 import type { ProjectState, ReceiptRow } from "@/lib/types";
-
-// While Backend's routes aren't ready, keep this true. Set it to false later.
-const USE_MOCK = false;
-
-// Stand-in for Backend's receipt route: computes the same numbers from the demo data
-function computeMockReceipt(state: ProjectState): ReceiptRow[] {
-  const doneTasks = state.tasks.filter((t) => t.status === "done");
-  const totalDoneEffort = doneTasks.reduce((sum, t) => sum + t.effort, 0);
-
-  return state.members.map((member) => {
-    const mine = doneTasks.filter((t) => t.owner_id === member.id);
-    const effortDone = mine.reduce((sum, t) => sum + t.effort, 0);
-    const onTime = mine.filter(
-      (t) =>
-        t.completed_at !== null &&
-        new Date(t.completed_at).getTime() <= new Date(t.internal_due_at).getTime()
-    );
-
-    return {
-      member_id: member.id,
-      name: member.name,
-      color: member.color,
-      tasks_done: mine.length,
-      effort_done: effortDone,
-      effort_share_pct: totalDoneEffort === 0 ? 0 : Math.round((effortDone / totalDoneEffort) * 100),
-      on_time_rate_pct: mine.length === 0 ? 0 : Math.round((onTime.length / mine.length) * 100),
-      confirmations: mine.filter((t) => t.confirmed_by !== null).length,
-      open_tasks: state.tasks.filter((t) => t.owner_id === member.id && t.status !== "done").length,
-    };
-  });
-}
 
 export function ReceiptScreen() {
   const { code } = useParams<{ code: string }>();
@@ -50,23 +18,13 @@ export function ReceiptScreen() {
 
     async function load() {
       try {
-        let loaded: ProjectState;
-        let receipt: ReceiptRow[];
+        const stateRes = await fetch(`/api/p/${code}`);
+        if (!stateRes.ok) throw new Error("not found");
+        const loaded: ProjectState = await stateRes.json();
 
-        if (USE_MOCK) {
-          loaded = buildDemoState();
-          if (code !== loaded.project.share_code) throw new Error("not found");
-          receipt = computeMockReceipt(loaded);
-        } else {
-          const stateRes = await fetch(`/api/p/${code}`);
-          if (!stateRes.ok) throw new Error("not found");
-          loaded = await stateRes.json();
-
-          const receiptRes = await fetch(`/api/projects/${loaded.project.id}/receipt`);
-          if (!receiptRes.ok) throw new Error("receipt");
-          const data = await receiptRes.json();
-          receipt = Array.isArray(data) ? data : data.rows; // check the real shape with Backend
-        }
+        const receiptRes = await fetch(`/api/projects/${loaded.project.id}/receipt`);
+        if (!receiptRes.ok) throw new Error("receipt");
+        const receipt: ReceiptRow[] = (await receiptRes.json()).rows;
 
         if (cancelled) return;
         setState(loaded);

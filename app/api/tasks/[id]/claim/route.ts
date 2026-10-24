@@ -1,12 +1,4 @@
-/**
- * POST /api/tasks/[id]/claim — "I'll take this one"
- * ---------------------------------------------------------------------------
- * OWNER: Backend
- * BODY:    { member_id }
- * RETURNS: the updated Task. The store logs a "claimed" event.
- * Claiming a task someone else owns re-assigns it ON PURPOSE: that's how a
- * teammate picks up a ghost's work. The event log keeps the history.
- */
+/** POST /api/tasks/[id]/claim: assign the task to a member (logs "claimed"). */
 
 import { store, StoreError } from "@/lib/db";
 

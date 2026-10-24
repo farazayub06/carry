@@ -1,20 +1,4 @@
-/**
- * lib/db/receipt.ts — computes the CONTRIBUTION RECEIPT (the killer feature)
- * ---------------------------------------------------------------------------
- * OWNER: Backend (math) · Frontend shows it on /p/[code]/receipt
- *
- * A fair, evidence-based summary of who did what, built ONLY from what really
- * happened (tasks + the event log), not opinions.
- *
- * METRICS PER MEMBER:
- *   tasks_done        tasks they own with status "done"
- *   effort_done       sum of effort (1–5) of those done tasks
- *   effort_share_pct  their effort_done ÷ the whole group's effort_done × 100
- *                     → the "who carried the team" number; everyone adds up to ~100%
- *   on_time_rate_pct  % of their done tasks finished by the internal deadline
- *   confirmations     how many of their done tasks a DIFFERENT teammate confirmed
- *   open_tasks        tasks they own that aren't done yet
- */
+/** Contribution receipt computed from tasks and the event log. */
 
 import type { ProjectState, ReceiptRow } from "../types";
 

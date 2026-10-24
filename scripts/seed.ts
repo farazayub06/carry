@@ -1,21 +1,4 @@
-/**
- * scripts/seed.ts — loads the DEMO project into Supabase
- * ---------------------------------------------------------------------------
- * OWNER: Backend (story/data comes from lib/mock.ts, written by Product)
- *
- * RUN:  npm run seed
- *
- *   1. Reads SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY from .env.local
- *   2. Deletes the old demo project (share code "demo42") so it's safe to re-run
- *   3. Inserts the demo project, members, tasks and event history
- *
- * Re-run it right before recording the video so the dates look fresh
- * (all mock dates are relative to "now").
- *
- * WHY THE ID MAPPING? The mock uses readable ids ("m-maya", "t-1") but
- * Postgres columns are UUIDs. So we make a real UUID for each mock id and
- * translate every reference (owner_id, confirmed_by, task_id…) through a Map.
- */
+/** Loads the demo project into Supabase (`npm run seed`). Re-run before demos so dates stay fresh. */
 
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
@@ -26,7 +9,7 @@ config({ path: ".env.local" });
 const url = process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!url || !key) {
-  console.error("❌ Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local first.");
+  console.error("Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local first.");
   process.exit(1);
 }
 
@@ -102,10 +85,10 @@ async function main() {
   );
   if (res.error) throw res.error;
 
-  console.log(`✅ Seeded demo project. Open /p/${DEMO_CODE}`);
+  console.log(`Seeded demo project. Open /p/${DEMO_CODE}`);
 }
 
 main().catch((err) => {
-  console.error("❌ Seed failed:", err.message ?? err);
+  console.error("Seed failed:", err.message ?? err);
   process.exit(1);
 });

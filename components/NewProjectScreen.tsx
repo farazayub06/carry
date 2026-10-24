@@ -4,9 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CreateProjectInput } from "@/lib/types";
 
-// While Backend's POST /api/projects isn't ready, keep this true. It skips the
-// fetch and sends you to the demo project's plan screen. Set it to false later.
-const USE_MOCK = false;
 const MAX_MEMBERS = 6;
 
 const inputClass =
@@ -59,11 +56,6 @@ export function NewProjectScreen() {
 
     setSubmitting(true);
     try {
-      if (USE_MOCK) {
-        router.push("/p/demo42/plan");
-        return;
-      }
-
       const res = await fetch("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -75,7 +67,7 @@ export function NewProjectScreen() {
       const shareCode = data.share_code ?? data.project?.share_code;
       if (!shareCode) throw new Error("no share code");
 
-      // If Backend tells us who the organizer is, remember it so they skip the join screen
+      // The first member is the organizer; remember them so they skip the join screen
       const organizerId = data.member_id ?? data.members?.[0]?.id;
       if (organizerId) localStorage.setItem(`carry:me:${shareCode}`, organizerId);
 

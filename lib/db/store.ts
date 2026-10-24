@@ -1,27 +1,4 @@
-/**
- * lib/db/store.ts — the DataStore INTERFACE (what any database must be able to do)
- * ---------------------------------------------------------------------------
- * OWNER: Backend
- *
- * THE BIG IDEA:
- * API routes never talk to Supabase directly. They call these functions.
- * We have TWO implementations of this same interface:
- *
- *   lib/db/memory.ts    → keeps everything in RAM, pre-loaded with the demo
- *                         project. Zero setup. Used automatically when the
- *                         Supabase env vars are missing (i.e. right now, on
- *                         everyone's laptop, before Backend finishes setup).
- *
- *   lib/db/supabase.ts  → the real Postgres database. Used automatically once
- *                         SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY are set.
- *
- * lib/db/index.ts picks which one to use. So Frontend and AI can build and
- * test the WHOLE app end to end today, and Backend can swap in the real DB
- * without anyone else changing a line of code.
- *
- * RULE: every function that CHANGES a task must also append an Event.
- * The receipt is computed from events — no event, no credit.
- */
+/** The DataStore interface, implemented by the in-memory and Supabase stores. */
 
 import type {
   CreateProjectInput,

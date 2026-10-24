@@ -1,11 +1,4 @@
-/**
- * POST /api/tasks/[id]/confirm — a TEAMMATE confirms a done task is really done
- * ---------------------------------------------------------------------------
- * OWNER: Backend
- * BODY:    { member_id }   ← must NOT be the task owner (the store enforces this)
- * RETURNS: the updated Task. The store logs a "confirmed" event.
- * Our answer to the judge question "can't people fake the log?"
- */
+/** POST /api/tasks/[id]/confirm: a teammate confirms a done task (logs "confirmed"). */
 
 import { store, StoreError } from "@/lib/db";
 

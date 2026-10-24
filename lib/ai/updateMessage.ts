@@ -1,27 +1,6 @@
 /**
- * lib/ai/updateMessage.ts — FEATURE: "📣 Copy update" for the group chat
- * ---------------------------------------------------------------------------
- * OWNER: AI
- *
- * Snapchat and iMessage don't allow bots, so instead of posting FOR the group,
- * Carry WRITES the message and a student pastes it in with one tap. That's
- * how we plug into the group chat without needing those apps' permission.
- *
- * TONE RULES (this is what makes Carry feel neutral, not bossy):
- *   - short: max ~6 lines / ~60 words, phone-friendly, 1–3 emoji
- *   - line 1: progress ("3 of 9 tasks done") + time until the due date
- *   - then who's up next and on what (first names), soonest deadline first
- *   - overdue work is mentioned kindly as "still open". Never shame anyone.
- *   - if tasks are unclaimed, end by inviting people to grab one
- *
- * Send the model a COMPACT summary (one line per task: title | owner |
- * status | overdue? | due in N days), not the whole raw state.
- * Ask for JSON {"message":"..."} so it's easy to validate.
- *
- * TODO (AI):
- *   [x] SYSTEM prompt with the tone rules
- *   [x] build the compact summary
- *   [x] writeUpdate(): askJson → else fallbackUpdate()
+ * Writes a short, neutral progress update that a student pastes into the group
+ * chat (Snapchat and iMessage don't allow bots, so Carry drafts instead of posting).
  */
 
 import "server-only";
@@ -39,10 +18,10 @@ RULES
 - Then who is up next and on what, using first names, soonest deadline first. Skip done tasks.
 - Overdue work is mentioned kindly as "still open". Never blame, shame or call anyone out.
 - If any tasks are UNCLAIMED, end with a friendly invitation to grab one.
-- Plain text only: no markdown, no headings. Bullets with "•" are fine.
+- Plain text only: no markdown, no headings, no emoji. Bullets with "•" are fine.
 
 Respond with ONLY a JSON object, no prose, no code fences:
-{"message": "📋 PSYCH 2220: 3 of 9 tasks done, due in 12 days.\\n• Jordan: lit review slides (in 3 days)\\n• Priya: survey analysis (in 5 days)\\n🙋 3 tasks still up for grabs!"}`;
+{"message": "PSYCH 2220: 3 of 9 tasks done, due in 12 days.\\n• Jordan: lit review slides (in 3 days)\\n• Priya: survey analysis (in 5 days)\\n3 tasks still up for grabs!"}`;
 
 const firstName = (name: string) => name.trim().split(/\s+/)[0] || name;
 
@@ -77,7 +56,7 @@ function validateUpdate(raw: unknown): string | null {
   const message = str(raw.message, 600)
     .replace(/\r\n?/g, "\n")
     .split("\n")
-    .map((l) => l.trim())
+    .map((l) => l.replace(/\p{Extended_Pictographic}\uFE0F?/gu, "").trim())
     .filter(Boolean)
     .slice(0, 8)
     .join("\n");

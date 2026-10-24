@@ -2,12 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { buildDemoState } from "@/lib/mock";
-import { daysFromNow } from "@/lib/utils";
 import type { DraftTask, PlanResult } from "@/lib/types";
 
-// While Backend's routes aren't ready, keep this true. Set it to false later.
-const USE_MOCK = false;
 const MAX_TASKS = 12;
 
 const inputClass =
@@ -24,34 +20,11 @@ function toDateInput(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-// The PRD rule: internal deadlines must be at least 2 days before the real due date
+// Internal deadlines must be at least 2 days before the real due date
 function latestAllowed(dueIso: string): string {
   const d = new Date(dueIso);
   d.setDate(d.getDate() - 2);
   return toDateInput(d.toISOString());
-}
-
-// Stand-in for the AI's answer until Backend's plan route exists
-function buildMockPlan(): PlanResult {
-  const task = (title: string, description: string, effort: number, days: number): DraftTask => ({
-    title,
-    description,
-    effort,
-    internal_due_at: daysFromNow(days),
-  });
-  return {
-    source: "ai",
-    rubric_items: [],
-    tasks: [
-      task("Finalize the research question", "Agree on one clear question the presentation answers.", 1, 2),
-      task("Write the survey questions", "8-10 questions on screen time before bed and sleep quality.", 2, 3),
-      task("Collect 20+ survey responses", "Post the survey in 3 class group chats and track the count daily.", 2, 5),
-      task("Analyze the results", "Summarize the survey data in 2-3 simple charts.", 4, 7),
-      task("Build the slide deck", "10 slides using the final outline and charts.", 4, 8),
-      task("Write the speaker notes", "A short script for each slide.", 3, 9),
-      task("Rehearse and proofread", "One full run-through, then fix typos and timing.", 1, 9),
-    ],
-  };
 }
 
 export function PlanScreen() {
@@ -72,21 +45,13 @@ export function PlanScreen() {
 
     async function load() {
       try {
-        let proj: { id: string; due_at: string };
-        let plan: PlanResult;
+        const stateRes = await fetch(`/api/p/${code}`);
+        if (!stateRes.ok) throw new Error("project");
+        const proj: { id: string; due_at: string } = (await stateRes.json()).project;
 
-        if (USE_MOCK) {
-          proj = buildDemoState().project;
-          plan = buildMockPlan();
-        } else {
-          const stateRes = await fetch(`/api/p/${code}`);
-          if (!stateRes.ok) throw new Error("project");
-          proj = (await stateRes.json()).project;
-
-          const planRes = await fetch(`/api/projects/${proj.id}/plan`, { method: "POST" });
-          if (!planRes.ok) throw new Error("plan");
-          plan = await planRes.json();
-        }
+        const planRes = await fetch(`/api/projects/${proj.id}/plan`, { method: "POST" });
+        if (!planRes.ok) throw new Error("plan");
+        const plan: PlanResult = await planRes.json();
 
         if (cancelled) return;
         setProject({ id: proj.id, due_at: proj.due_at });
@@ -180,15 +145,12 @@ export function PlanScreen() {
 
     setSaving(true);
     try {
-      if (!USE_MOCK) {
-        // Check with Backend that the body should be { tasks: [...] }
-        const res = await fetch(`/api/projects/${project!.id}/tasks`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tasks: draft }),
-        });
-        if (!res.ok) throw new Error("save failed");
-      }
+      const res = await fetch(`/api/projects/${project!.id}/tasks`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tasks: draft }),
+      });
+      if (!res.ok) throw new Error("save failed");
       router.push(`/p/${code}/share`);
     } catch {
       setError("Couldn't save the plan. Try again.");

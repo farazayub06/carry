@@ -1,16 +1,9 @@
--- supabase/schema.sql — the real database tables
--- ---------------------------------------------------------------------------
--- OWNER: Backend
---
--- HOW TO RUN: Supabase dashboard → SQL Editor → New query → paste this whole
--- file → Run. Safe to re-run: it drops and recreates the tables (WIPES DATA).
---
--- These tables mirror the TypeScript types in lib/types.ts exactly.
--- If you change one, change the other in the same commit.
+-- Carry database schema. Run in the Supabase SQL editor.
+-- Re-running drops and recreates every table (wipes data).
 --
 --   projects 1 ──< members
 --   projects 1 ──< tasks
---   projects 1 ──< events   (append-only activity log → powers the receipt)
+--   projects 1 ──< events   (append-only activity log that powers the receipt)
 
 drop table if exists events;
 drop table if exists tasks;

@@ -1,13 +1,4 @@
-/**
- * scripts/ai-smoke.ts — "does my API key work?" in one command
- * ---------------------------------------------------------------------------
- * OWNER: AI
- *
- *   npx tsx --conditions=react-server scripts/ai-smoke.ts
- *
- * Reads .env.local, sends one tiny prompt through askModel(), prints the reply.
- * Prints "null" if the key is missing or the request failed (check the log above it).
- */
+/** Checks the Anthropic key: npx tsx --conditions=react-server scripts/ai-smoke.ts */
 
 import { config } from "dotenv";
 config({ path: ".env.local" });

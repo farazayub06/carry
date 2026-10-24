@@ -1,10 +1,4 @@
-/**
- * POST /api/tasks/[id]/status — move a task between statuses
- * ---------------------------------------------------------------------------
- * OWNER: Backend
- * BODY:    { member_id, status }   status ∈ not_started | in_progress | stuck | done
- * RETURNS: the updated Task. The store logs "completed" or "status_changed".
- */
+/** POST /api/tasks/[id]/status: change a task's status (logs the change). */
 
 import { store, StoreError } from "@/lib/db";
 import type { TaskStatus } from "@/lib/types";
@@ -21,8 +15,6 @@ export async function POST(req: Request, ctx: RouteContext<"/api/tasks/[id]/stat
     return Response.json({ error: "Request body must be JSON" }, { status: 400 });
   }
   if (!body.member_id) return Response.json({ error: 'Missing "member_id"' }, { status: 400 });
-
-  // Only accept one of the 4 real statuses.
   const status = body.status as TaskStatus;
   if (!VALID.includes(status)) {
     return Response.json({ error: `status must be one of: ${VALID.join(", ")}` }, { status: 400 });

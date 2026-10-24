@@ -1,26 +1,4 @@
-/**
- * lib/types.ts — THE SHARED CONTRACT
- * ---------------------------------------------------------------------------
- * OWNER: everyone (announce in the group chat before you edit this file!)
- *
- * WHAT THIS FILE IS:
- * Every shape of data that moves through Carry lives here. Frontend, Backend
- * and AI all import from this one file, so if we agree on these types we can
- * build in parallel without blocking each other:
- *   - Frontend builds screens against these shapes (using lib/mock.ts data).
- *   - Backend returns exactly these shapes from the API routes.
- *   - AI returns PlanResult / StuckResult in exactly these shapes.
- *
- * HOW THE DATA FITS TOGETHER (mirrors supabase/schema.sql):
- *
- *   Project 1 ──< many Member      (the people in the group)
- *   Project 1 ──< many Task        (the plan the AI generated)
- *   Project 1 ──< many Event       (an append-only log of everything that happened)
- *
- * The Event log is the secret sauce: the contribution receipt at the end is
- * computed FROM events, so every action (claim, status change, confirm) must
- * write an event. That's what makes the receipt "evidence" instead of opinion.
- */
+/** Shared data types for the database, API, and UI. Mirrors supabase/schema.sql. */
 
 /** The four states a task can be in. Shown as colored pills in the UI. */
 export type TaskStatus = "not_started" | "in_progress" | "stuck" | "done";
@@ -87,10 +65,6 @@ export interface ProjectState {
   events: Event[];
 }
 
-/* ------------------------------------------------------------------------- */
-/*  INPUT shapes (what the frontend SENDS to the API)                        */
-/* ------------------------------------------------------------------------- */
-
 /** Body of POST /api/projects — the "create project" form. */
 export interface CreateProjectInput {
   name: string;
@@ -107,10 +81,6 @@ export interface DraftTask {
   effort: number;
   internal_due_at: string;
 }
-
-/* ------------------------------------------------------------------------- */
-/*  AI shapes (what lib/ai/* RETURNS)                                        */
-/* ------------------------------------------------------------------------- */
 
 /** What the AI planner returns. Validated in lib/ai/validate.ts before we trust it. */
 export interface PlanResult {
@@ -133,10 +103,6 @@ export interface RubricCheckResult {
   missing: string[]; //   rubric items nothing in the plan covers yet
   source: "ai" | "fallback";
 }
-
-/* ------------------------------------------------------------------------- */
-/*  RECEIPT (computed in lib/db/receipt.ts, shown on /p/[code]/receipt)      */
-/* ------------------------------------------------------------------------- */
 
 export interface ReceiptRow {
   member_id: string;

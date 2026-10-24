@@ -17,7 +17,7 @@ const STATUS_CLASSES: Record<TaskStatus, string> = {
 };
 
 export function StatusPill({ task }: { task: Task }) {
-  // Overdue wins over the status, per the team's color rules
+  // Overdue takes priority over the status
   const overdue = isOverdue(task);
   const label = overdue ? "Overdue" : STATUS_LABEL[task.status];
   const classes = overdue ? "bg-danger/15 text-danger" : STATUS_CLASSES[task.status];

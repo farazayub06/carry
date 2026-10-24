@@ -1,13 +1,4 @@
-/**
- * POST /api/projects — create a new group project
- * ---------------------------------------------------------------------------
- * OWNER: Backend
- * CALLED BY: the create-project form (app/new)
- *
- * BODY:    CreateProjectInput (lib/types.ts):
- *          { name, assignment_text, rubric_text, due_at, member_names[] }
- * RETURNS: ProjectState (project + members, no tasks yet)
- */
+/** POST /api/projects: create a project and its members. */
 
 import { store } from "@/lib/db";
 import type { CreateProjectInput } from "@/lib/types";
@@ -16,15 +7,12 @@ import type { CreateProjectInput } from "@/lib/types";
 const fail = (message: string, status = 400) => Response.json({ error: message }, { status });
 
 export async function POST(req: Request) {
-  // 1. Read the JSON body. If it's not valid JSON, reject it.
   let body: Partial<CreateProjectInput>;
   try {
     body = await req.json();
   } catch {
     return fail("Request body must be JSON");
   }
-
-  // 2. Clean + validate each field. Never trust what the browser sends.
   const name = String(body.name ?? "").trim();
   const assignment_text = String(body.assignment_text ?? "").trim();
   const rubric_text = String(body.rubric_text ?? "").trim(); // optional
@@ -38,8 +26,6 @@ export async function POST(req: Request) {
   if (!assignment_text) return fail("Paste the assignment prompt");
   if (member_names.length < 2) return fail("Add at least 2 teammates");
   if (Number.isNaN(due.getTime())) return fail("Pick a real due date");
-
-  // 3. Save it (memory now, Supabase later; this route doesn't care which).
   const state = await store.createProject({
     name,
     assignment_text,
@@ -47,8 +33,5 @@ export async function POST(req: Request) {
     due_at: due.toISOString(),
     member_names,
   });
-
-  // 4. Send back the new project. The frontend uses state.project.share_code
-  //    to go to /p/<code>/plan, and members[0] (the organizer) as "me".
   return Response.json(state);
 }

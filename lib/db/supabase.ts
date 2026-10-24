@@ -1,27 +1,9 @@
-/**
- * lib/db/supabase.ts — the REAL database (Supabase / Postgres)
- * ---------------------------------------------------------------------------
- * OWNER: Backend
- *
- * Same DataStore interface as memory.ts, but backed by Postgres so every
- * teammate's phone sees the same data. lib/db/index.ts switches to this
- * automatically when SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY are set.
- *
- * SECURITY: the service role key bypasses row-level security. That's OK ONLY
- * because this runs on the server (API routes). Never import this from a
- * "use client" file, and never name the variable NEXT_PUBLIC_….
- *
- * Supabase returns { data, error } instead of throwing, so we ALWAYS check error.
- */
+/** Postgres DataStore via Supabase. Server-only; uses the service role key. */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { CreateProjectInput, DraftTask, EventType, Member, Project, ProjectState, Task, TaskStatus } from "../types";
 import { clampInternalDeadline, colorFor, newShareCode } from "../utils";
 import { StoreError, type DataStore } from "./store";
-
-/* ------------------------------------------------------------------------- */
-/*  Connection                                                               */
-/* ------------------------------------------------------------------------- */
 
 let client: SupabaseClient | null = null;
 
@@ -42,10 +24,6 @@ function must<T>(result: { data: T | null; error: { message: string } | null }):
   if (result.data === null) throw new StoreError("Not found", 404);
   return result.data;
 }
-
-/* ------------------------------------------------------------------------- */
-/*  Helpers                                                                  */
-/* ------------------------------------------------------------------------- */
 
 /** Load everything for one project: members, tasks, events (3 queries at the same time). */
 async function loadState(project: Project): Promise<ProjectState> {
@@ -81,10 +59,6 @@ async function assertMember(projectId: string, memberId: string) {
   const res = await sb().from("members").select("id").eq("project_id", projectId).eq("id", memberId).maybeSingle();
   if (res.error || !res.data) throw new StoreError("You're not a member of this project");
 }
-
-/* ------------------------------------------------------------------------- */
-/*  The DataStore functions                                                  */
-/* ------------------------------------------------------------------------- */
 
 export const supabaseStore: DataStore = {
   async getStateByCode(code) {

@@ -1,19 +1,4 @@
-/**
- * lib/ai/rubricCheck.ts — FEATURE (STRETCH / P2): "are we missing anything?"
- * ---------------------------------------------------------------------------
- * OWNER: AI
- *
- * Compare the rubric against the plan and flag rubric items NO task covers
- * (e.g. "the rubric wants a chart, but nobody owns making a chart").
- *
- * ⚠️  Only start this after every P0/P1 feature works (see the PRD).
- *
- * TODO (AI):
- *   [x] split project.rubric_text into items (one per line)
- *   [x] SYSTEM prompt: for each rubric item decide if a task clearly covers it;
- *       JSON only: {"covered":[...],"missing":[...]}, copying items exactly
- *   [x] checkRubric(): askJson → else fallbackRubricCheck()
- */
+/** Flags rubric items that no task in the plan covers. */
 
 import "server-only";
 import type { ProjectState, RubricCheckResult } from "../types";

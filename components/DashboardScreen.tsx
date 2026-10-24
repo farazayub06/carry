@@ -7,15 +7,11 @@ import { TaskSheet } from "@/components/TaskSheet";
 import { WorkloadBar } from "@/components/WorkloadBar";
 import Link from "next/link";
 import type { Member, ProjectState, Task, TaskStatus, StuckResult } from "@/lib/types";
-import { isAtRisk, daysUntil, lightestMember } from "@/lib/utils";
-
-// Backend's stuck route is live, so this is off. Flip to true to fake the AI offline.
-const USE_MOCK_AI = false;
+import { isAtRisk, daysUntil } from "@/lib/utils";
 
 export function DashboardScreen() {
   const { code } = useParams<{ code: string }>();
   const router = useRouter();
-  // Real project from the backend (GET /api/p/[code])
   const [state, setState] = useState<ProjectState | null>(null);
   const [notFound, setNotFound] = useState(false);
 
@@ -142,24 +138,6 @@ function confirmTask(task: Task) {
 async function getStuckHelp(task: Task): Promise<StuckResult> {
   // Asking for help means you're stuck, so mark it
   if (task.status !== "stuck") changeStatus(task, "stuck");
-
-  if (USE_MOCK_AI) {
-    await new Promise((resolve) => setTimeout(resolve, 800)); // pretend the AI is thinking
-    const helper = lightestMember(state!.members, state!.tasks, task.owner_id ?? undefined);
-    return {
-      source: "ai",
-      substeps: [
-        `Write down exactly what's blocking you on "${task.title}".`,
-        "Pick the smallest piece you could finish in 15 minutes and do only that.",
-        "Ask a teammate for 10 minutes to look at it with you.",
-        "Mark whatever is already done so the group can see your progress.",
-      ],
-      suggest_reassign_to: helper ? helper.id : null,
-      reason: helper
-        ? `${helper.name} has the lightest workload right now, so this might be a good one to hand over.`
-        : "",
-    };
-  }
 
   const res = await fetch(`/api/tasks/${task.id}/stuck`, { method: "POST" });
   if (!res.ok) throw new Error("stuck helper failed");

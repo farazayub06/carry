@@ -1,41 +1,53 @@
-/**
- * app/page.tsx — LANDING PAGE  (route: /)
- * ---------------------------------------------------------------------------
- * OWNER: Frontend (layout) + Product (copy)
- *
- * JOB OF THIS PAGE: in 5 seconds, explain what Carry does and get the
- * organizer to tap "Start a project".
- *
- * This is a Server Component (no "use client" at the top) because it has no
- * interactivity. It renders instantly as static HTML. Keep it that way.
- *
- * TODO (Frontend + Product):
- *   [ ] Headline + one-sentence pitch ("Stop carrying your group project.")
- *   [ ] Primary button → /new  ("Start a project")
- *   [ ] Secondary button → /p/demo42  ("See a demo group"), handy during judging
- *   [ ] A 4-step "how it works": paste assignment → share link in the group
- *       chat → Carry does the chasing → contribution receipt
- *   [ ] Use next/link's <Link> for navigation (not <a>)
- */
-
 import Link from "next/link";
+
+const STEPS = [
+  { title: "Paste the assignment", body: "Carry's AI turns the prompt and rubric into a fair plan with effort points and early deadlines." },
+  { title: "Share one link", body: "Drop it in your Snapchat or iMessage group chat. Everyone taps their name. No accounts." },
+  { title: "Carry keeps it moving", body: "Claim tasks, update status, get unstuck, and copy a friendly progress update into the chat." },
+  { title: "Get the receipt", body: "A contribution receipt built from the activity log shows who actually did the work." },
+];
 
 export default function Home() {
   return (
-    <main className="pt-14">
-      <p className="text-sm font-semibold text-accent uppercase">Carry</p>
-      <h1 className="mt-2 text-3xl font-bold">Stop carrying your group project.</h1>
-      <p className="mt-4 text-muted">TODO: landing page. See the comment at the top of app/page.tsx.</p>
+    <div className="space-y-10 pt-8 pb-8">
+      <section className="space-y-4">
+        <p className="text-sm font-semibold uppercase tracking-widest text-muted">Carry</p>
+        <h1 className="text-4xl font-bold leading-tight">Stop carrying your group project.</h1>
+        <p className="text-muted">
+          A fair plan, a shared tracker that lives in your group chat, and proof of who did what.
+        </p>
+        <div className="grid gap-2 pt-2">
+          <Link
+            href="/new"
+            className="flex min-h-12 items-center justify-center rounded-xl bg-brand font-medium text-brand-foreground"
+          >
+            Start a project
+          </Link>
+          <Link
+            href="/p/demo42"
+            className="flex min-h-12 items-center justify-center rounded-xl border border-border bg-card font-medium"
+          >
+            See a demo group
+          </Link>
+        </div>
+      </section>
 
-      {/* Temporary links so the team can click around the skeleton */}
-      <nav className="mt-8 flex flex-col gap-2 text-sm underline">
-        <Link href="/new">/new: create project</Link>
-        <Link href="/p/demo42">/p/demo42: dashboard</Link>
-        <Link href="/p/demo42/join">/p/demo42/join</Link>
-        <Link href="/p/demo42/plan">/p/demo42/plan</Link>
-        <Link href="/p/demo42/share">/p/demo42/share</Link>
-        <Link href="/p/demo42/receipt">/p/demo42/receipt</Link>
-      </nav>
-    </main>
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">How it works</h2>
+        <ol className="space-y-3">
+          {STEPS.map((step, i) => (
+            <li key={step.title} className="flex gap-3 rounded-xl border border-border bg-card p-3">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-brand-foreground">
+                {i + 1}
+              </span>
+              <div>
+                <p className="font-medium">{step.title}</p>
+                <p className="text-sm text-muted">{step.body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+    </div>
   );
 }
