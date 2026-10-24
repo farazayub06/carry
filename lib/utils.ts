@@ -1,94 +1,88 @@
 /**
  * lib/utils.ts — small helpers used everywhere (ids, dates, workload math)
  * ---------------------------------------------------------------------------
- * OWNER: shared (Backend writes these first; announce in the chat before changing)
- *
- * Pure functions with no side effects, so they're safe on the server (API
- * routes) AND in the browser (components).
- *
- * The signatures below are the agreed contract: other files call these
- * names. Each body is a TODO with a placeholder return so the app compiles.
- * Replace the placeholder, keep the signature.
+ * OWNER: shared (Backend). Announce in the chat before changing.
+ * Pure functions with no side effects: safe on the server AND in the browser.
  */
 
 import type { Member, Task } from "./types";
 
+const DAY_MS = 24 * 60 * 60 * 1000; // one day in milliseconds
+
 /* ----------------------------- IDs & codes ------------------------------- */
 
-/** A random UUID. Hint: crypto.randomUUID() works in Node and modern browsers. */
+/** A random UUID, the internal label for every saved thing. */
 export function newId(): string {
-  // TODO
-  return "todo-id";
+  return crypto.randomUUID();
 }
 
-/**
- * The short code in the share link: /p/<code>.
- * TODO: 6 random characters from an alphabet WITHOUT look-alikes
- * (no 0/o, 1/l/i) so it's easy to read aloud, e.g. "k7x2qp".
- */
+/** The short code in the share link: /p/<code>. 6 chars, no look-alikes (0/o, 1/l/i). */
 export function newShareCode(): string {
-  // TODO
-  return "todo42";
+  const alphabet = "abcdefghjkmnpqrstuvwxyz23456789"; // no 0, o, 1, l, i
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return code;
 }
 
 /* ------------------------------- Dates ----------------------------------- */
 
-/** ISO string for "n days from now" (negative = past). Used by mock data so the demo always looks fresh. */
+/** ISO string for "n days from now" at 11:59 PM (negative = past). Keeps the demo fresh. */
 export function daysFromNow(n: number): string {
-  // TODO: set the time to 11:59 PM so deadlines read as "end of that day"
-  return new Date(Date.now() + n * 86_400_000).toISOString();
+  const d = new Date(Date.now() + n * DAY_MS);
+  d.setHours(23, 59, 0, 0);
+  return d.toISOString();
 }
 
 /** Whole days between now and the date (negative = overdue). */
 export function daysUntil(iso: string): number {
-  // TODO: Math.ceil((date - now) / one day in ms)
-  void iso;
-  return 0;
+  return Math.ceil((new Date(iso).getTime() - Date.now()) / DAY_MS);
 }
 
-/** "Thu, Nov 6" — short and readable on a phone. Hint: toLocaleDateString("en-US", { weekday, month, day }). */
+/** "Thu, Nov 6": short and readable on a phone. */
 export function formatDay(iso: string): string {
-  // TODO
-  return iso;
+  return new Date(iso).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
 
-/** "in 3 days" / "tomorrow" / "today" / "2 days late": friendlier than a raw date. */
+/** "in 3 days" / "tomorrow" / "today" / "2 days late". */
 export function relativeDay(iso: string): string {
-  // TODO: build on daysUntil()
-  return iso;
+  const d = daysUntil(iso);
+  if (d < -1) return `${Math.abs(d)} days late`;
+  if (d === -1) return "1 day late";
+  if (d === 0) return "today";
+  if (d === 1) return "tomorrow";
+  return `in ${d} days`;
 }
 
 /**
  * THE INTERNAL DEADLINE RULE (PRD): our deadlines must be ≥ 2 days BEFORE the
  * real due date (buffer to assemble everything), and never in the past.
  * The AI is told this rule, but we ENFORCE it in code because AI can slip.
- *
- * TODO: return the date moved earlier if it's too late, later if it's in the
- * past; if `iso` isn't a valid date, return (realDue − 2 days).
  */
 export function clampInternalDeadline(iso: string, realDueIso: string): string {
-  // TODO
-  void realDueIso;
-  return iso;
+  const latestAllowed = new Date(realDueIso).getTime() - 2 * DAY_MS; // 2 days before due
+  const earliestAllowed = Date.now() + 0.5 * DAY_MS; //                 at least half a day from now
+  let t = new Date(iso).getTime();
+  if (Number.isNaN(t)) t = latestAllowed; //                  garbage date → latest safe day
+  t = Math.min(t, latestAllowed); //                          too late → pull it earlier
+  t = Math.max(t, Math.min(earliestAllowed, latestAllowed)); // in the past → push it later
+  return new Date(t).toISOString();
 }
 
 /* ----------------------------- Task state -------------------------------- */
 
-/** Past its internal deadline and not done → red flag on the dashboard. */
+/** Past its internal deadline and not done → red flag. */
 export function isOverdue(task: Task): boolean {
-  // TODO: task.status !== "done" && daysUntil(task.internal_due_at) < 0
-  void task;
-  return false;
+  return task.status !== "done" && daysUntil(task.internal_due_at) < 0;
 }
 
-/**
- * "Needs attention" = overdue, OR stuck, OR due within ~1 day and not started.
- * Powers the warning section on the dashboard (and stretch: who gets a nudge).
- */
+/** "Needs attention" = overdue, OR stuck, OR due within ~1 day and not started. */
 export function isAtRisk(task: Task): boolean {
-  // TODO
-  void task;
-  return false;
+  if (task.status === "done") return false;
+  if (isOverdue(task)) return true;
+  if (task.status === "stuck") return true;
+  return daysUntil(task.internal_due_at) <= 1 && task.status === "not_started";
 }
 
 /* ---------------------------- Workload math ------------------------------ */
@@ -99,35 +93,33 @@ export interface Workload {
   share: number; //  0–1, their slice of all claimed effort
 }
 
-/**
- * Who owns how much work. Drives components/WorkloadBar.tsx.
- * TODO: for each member sum task.effort where task.owner_id === member.id;
- * unclaimedEffort = effort of tasks with no owner; totalEffort = claimed + unclaimed.
- */
+/** Who owns how much work. Drives the workload bar ("is the split fair?"). */
 export function computeWorkload(members: Member[], tasks: Task[]) {
-  // TODO
-  void tasks;
-  const perMember: Workload[] = members.map((member) => ({ member, effort: 0, share: 0 }));
-  return { perMember, unclaimedEffort: 0, totalEffort: 0 };
+  const claimedTotal = tasks.filter((t) => t.owner_id).reduce((sum, t) => sum + t.effort, 0);
+
+  const perMember: Workload[] = members.map((member) => {
+    const effort = tasks.filter((t) => t.owner_id === member.id).reduce((sum, t) => sum + t.effort, 0);
+    return { member, effort, share: claimedTotal ? effort / claimedTotal : 0 };
+  });
+
+  const unclaimedEffort = tasks.filter((t) => !t.owner_id).reduce((sum, t) => sum + t.effort, 0);
+
+  return { perMember, unclaimedEffort, totalEffort: claimedTotal + unclaimedEffort };
 }
 
-/**
- * The member carrying the LEAST effort right now, excluding `excludeId`
- * (the stuck person). Used by the "I'm stuck" helper's rebalance suggestion.
- */
+/** The member carrying the LEAST effort (excluding the stuck person). Used by the "I'm stuck" helper. */
 export function lightestMember(members: Member[], tasks: Task[], excludeId?: string): Member | null {
-  // TODO: build on computeWorkload(), sort by effort ascending
-  void tasks;
-  return members.find((m) => m.id !== excludeId) ?? null;
+  const { perMember } = computeWorkload(members, tasks);
+  return (
+    perMember
+      .filter((w) => w.member.id !== excludeId)
+      .sort((a, b) => a.effort - b.effort)[0]?.member ?? null
+  );
 }
 
 /* ------------------------------ Colors ----------------------------------- */
 
-/**
- * One color per teammate (avatar + workload bar), assigned in join order.
- * TODO (Design): pick ~6 colors readable on white and distinct from each other
- * and from the status colors.
- */
+/** One color per teammate (avatar + workload bar), assigned in join order. */
 export const MEMBER_COLORS = ["#2563eb", "#d97706", "#059669", "#db2777", "#7c3aed", "#0891b2"];
 
 export function colorFor(index: number): string {

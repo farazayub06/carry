@@ -1,30 +1,26 @@
 /**
  * POST /api/tasks/[id]/stuck — "I'm stuck, help me"
  * ---------------------------------------------------------------------------
- * OWNER: Backend
- * CALLED BY: the "I'm stuck, help me" button in TaskSheet. AI owns lib/ai/stuck.ts
- *
+ * OWNER: Backend (route) · AI lead owns lib/ai/stuck.ts
  * BODY:    none
- * RETURNS: StuckResult { substeps[], suggest_reassign_to (member id | null), reason, source }
+ * RETURNS: StuckResult { substeps[], suggest_reassign_to, reason, source }
  * Read-only: it SUGGESTS. If the group agrees, the helper taps Claim.
- *
- * TODO (Backend):
- *   [ ] task = await store.getTask(id) → 404 if missing
- *   [ ] state = await store.getStateById(task.project_id)
- *   [ ] return helpStuck(task, state)  (from @/lib/ai/stuck)
- *
- * ALL ROUTES, SHARED RULES (Backend):
- *   - Read params with `const { id } = await ctx.params;` (params is a Promise in this Next.js version)
- *   - Read the body with `await req.json()` (wrap in try/catch → 400 if it isn't JSON)
- *   - Talk to the database ONLY through `store` from "@/lib/db" (never Supabase directly)
- *   - Success → `Response.json(data)`; errors → `Response.json({ error: "message" }, { status: 400/404 })`
- *     (tip: write one small `handle()` wrapper so every route does this the same way;
- *      catch StoreError from "@/lib/db" and use its .status)
- *   - Until this route is done it returns 501 "Not implemented", so the frontend can see what's missing
  */
+
+import { store } from "@/lib/db";
+import { helpStuck } from "@/lib/ai/stuck";
 
 export async function POST(_req: Request, ctx: RouteContext<"/api/tasks/[id]/stuck">) {
   const { id } = await ctx.params;
-  // TODO: implement (see the comment above)
-  return Response.json({ error: `Not implemented yet: POST /api/tasks/[id]/stuck (id=${id})` }, { status: 501 });
+
+  // 1. Find the task.
+  const task = await store.getTask(id);
+  if (!task) return Response.json({ error: "Task not found" }, { status: 404 });
+
+  // 2. Load its project (the AI needs the assignment + everyone's workload).
+  const state = await store.getStateById(task.project_id);
+  if (!state) return Response.json({ error: "Project not found" }, { status: 404 });
+
+  // 3. Ask the AI lead's function for help (falls back if AI isn't ready).
+  return Response.json(await helpStuck(task, state));
 }

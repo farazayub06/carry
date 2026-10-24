@@ -4,27 +4,51 @@
  * OWNER: Backend
  * CALLED BY: the create-project form (app/new)
  *
- * BODY:    CreateProjectInput (lib/types.ts): { name, assignment_text, rubric_text, due_at, member_names[] }
+ * BODY:    CreateProjectInput (lib/types.ts):
+ *          { name, assignment_text, rubric_text, due_at, member_names[] }
  * RETURNS: ProjectState (project + members, no tasks yet)
- *
- * TODO (Backend):
- *   [ ] Validate: name + assignment_text required, at least 2 member_names, due_at is a real date
- *   [ ] Trim names, drop empty ones, cap at ~8 members
- *   [ ] return store.createProject({...})
- *   [ ] (The frontend saves members[0] (the organizer) as "me" so they skip the join screen)
- *
- * ALL ROUTES, SHARED RULES (Backend):
- *   - Read params with `const { id } = await ctx.params;` (params is a Promise in this Next.js version)
- *   - Read the body with `await req.json()` (wrap in try/catch → 400 if it isn't JSON)
- *   - Talk to the database ONLY through `store` from "@/lib/db" (never Supabase directly)
- *   - Success → `Response.json(data)`; errors → `Response.json({ error: "message" }, { status: 400/404 })`
- *     (tip: write one small `handle()` wrapper so every route does this the same way;
- *      catch StoreError from "@/lib/db" and use its .status)
- *   - Until this route is done it returns 501 "Not implemented", so the frontend can see what's missing
  */
 
+import { store } from "@/lib/db";
+import type { CreateProjectInput } from "@/lib/types";
+
+/** Small helper so every error looks the same: { error: "..." } + a status code. */
+const fail = (message: string, status = 400) => Response.json({ error: message }, { status });
+
 export async function POST(req: Request) {
-  // TODO: implement (see the comment above). Start with: const body = await req.json();
-  void req;
-  return Response.json({ error: "Not implemented yet: POST /api/projects" }, { status: 501 });
+  // 1. Read the JSON body. If it's not valid JSON, reject it.
+  let body: Partial<CreateProjectInput>;
+  try {
+    body = await req.json();
+  } catch {
+    return fail("Request body must be JSON");
+  }
+
+  // 2. Clean + validate each field. Never trust what the browser sends.
+  const name = String(body.name ?? "").trim();
+  const assignment_text = String(body.assignment_text ?? "").trim();
+  const rubric_text = String(body.rubric_text ?? "").trim(); // optional
+  const member_names = (body.member_names ?? [])
+    .map((n) => String(n).trim()) // remove extra spaces
+    .filter(Boolean) //               drop empty names
+    .slice(0, 8); //                  cap the group size
+  const due = new Date(String(body.due_at ?? ""));
+
+  if (!name) return fail("Give the project a name");
+  if (!assignment_text) return fail("Paste the assignment prompt");
+  if (member_names.length < 2) return fail("Add at least 2 teammates");
+  if (Number.isNaN(due.getTime())) return fail("Pick a real due date");
+
+  // 3. Save it (memory now, Supabase later; this route doesn't care which).
+  const state = await store.createProject({
+    name,
+    assignment_text,
+    rubric_text,
+    due_at: due.toISOString(),
+    member_names,
+  });
+
+  // 4. Send back the new project. The frontend uses state.project.share_code
+  //    to go to /p/<code>/plan, and members[0] (the organizer) as "me".
+  return Response.json(state);
 }
