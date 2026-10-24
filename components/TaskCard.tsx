@@ -1,43 +1,37 @@
-/**
- * components/TaskCard.tsx — one task in the dashboard list
- * ---------------------------------------------------------------------------
- * OWNER: Frontend
- *
- * SHOWS AT A GLANCE:
- *   - owner's avatar (colored circle with their initial), or a dashed empty
- *     circle if nobody has claimed it
- *   - title (struck through if done)
- *   - <StatusPill>, owner name or "Up for grabs", "due in 3 days" (relativeDay in lib/utils.ts)
- *   - "✓ confirmed" if a teammate confirmed it
- *   - effort as dots: ●●●○○ = 3 out of 5
- *
- * AT-RISK STYLING: use isOverdue() / isAtRisk() from lib/utils.ts to give the
- * card a red (overdue) or amber (at risk) left border. Problems should jump
- * out without anyone having to point fingers.
- *
- * Tapping the card calls onOpen() → the dashboard opens <TaskSheet>.
- * Make the whole card a <button> so it's one big tap target.
- *
- * TODO (Frontend):
- *   [ ] Build the layout above
- *   [ ] Accessible: a real <button>, readable at phone size
- */
+"use client";
 
-import type { Member, Task } from "@/lib/types";
+import type { Member, Task, TaskStatus } from "@/lib/types";
+import { isOverdue, relativeDay } from "@/lib/utils";
+import { StatusPill } from "@/components/StatusPill";
 
 export function TaskCard({
   task,
   owner,
-  onOpen,
+  onClick,
 }: {
   task: Task;
-  owner: Member | null; // null = unclaimed
-  onOpen: () => void;
+  owner: Member | undefined;
+  onClick: () => void;
 }) {
+  const overdue = isOverdue(task);
+
   return (
-    <button onClick={onOpen} className="w-full rounded-2xl border border-line bg-card p-3 text-left">
-      {/* TODO: real card. Placeholder so the props are visibly wired up: */}
-      {task.title} · {owner?.name ?? "Up for grabs"} · {task.status}
+    <button
+      onClick={onClick}
+      className="w-full rounded-xl border border-border border-l-4 bg-card p-3 text-left"
+      style={{ borderLeftColor: owner ? owner.color : "var(--border)" }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className="font-medium">{task.title}</p>
+        <StatusPill task={task} />
+      </div>
+
+      <div className="mt-1 flex items-center justify-between text-sm text-muted">
+        <span>{owner ? owner.name : "Unclaimed"}</span>
+        <span className={overdue ? "font-medium text-danger" : ""}>
+          {task.status === "done" ? "Finished" : relativeDay(task.internal_due_at)}
+        </span>
+      </div>
     </button>
   );
 }
