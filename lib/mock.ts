@@ -80,7 +80,7 @@ export function buildDemoState(): ProjectState {
         description: "Post the survey in 3 class group chats and track the count daily.",
         effort: 2,
         internal_due_at: daysFromNow(-1),
-        owner_id: "m-sam", // the ghost: claimed, never started, now overdue
+        owner_id: null, // the ghost: claimed, never started, now overdue
         status: "not_started",
         completed_at: null,
         confirmed_by: null,
