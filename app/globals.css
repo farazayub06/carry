@@ -1,49 +1,48 @@
-/*
- * app/globals.css — design tokens + base styles
- * ---------------------------------------------------------------------------
- * OWNER: Frontend (+ Product/Design picks the final colors)
- *
- * HOW TAILWIND v4 COLORS WORK:
- * Any --color-* variable inside @theme automatically becomes utility classes:
- *   --color-accent  →  bg-accent, text-accent, border-accent
- * Change a color HERE and the whole app updates.
- *
- * The values below are PLACEHOLDERS so the app has a look on day one.
- *
- * TODO (Product/Design + Frontend):
- *   [ ] Pick the final brand color for --color-accent
- *   [ ] Keep status colors as FIXED meanings across the app (never decoration):
- *       not started = gray · in progress = blue · stuck = amber · done = green · overdue = red
- *   [ ] (optional) add a bottom-sheet slide-up animation for components/TaskSheet.tsx
- */
-
 @import "tailwindcss";
 
-@theme {
-  /* Brand (placeholder) */
-  --color-accent: #e4572e;
-  --color-accent-soft: #fdebe5;
+:root {
+  --background: #1a1a1a;
+  --foreground: #b4bed5;
+  --card: #464a59;
+  --border: #e2e8f0;
+  --muted: #64748b;
 
-  /* Neutrals */
-  --color-paper: #faf8f5; /* page background */
-  --color-card: #ffffff; /*  cards / sheets */
-  --color-ink: #1c1917; /*   main text */
-  --color-muted: #78716c; /* secondary text */
-  --color-line: #e7e5e4; /*  borders + dividers */
+  --brand: #4f46e5;
+  --brand-foreground: #ffffff;
 
-  /* Status (fixed meanings) */
-  --color-todo: #a8a29e;
-  --color-doing: #2563eb;
-  --color-stuck: #d97706;
-  --color-done: #16a34a;
-  --color-late: #dc2626;
-
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Task statuses */
+  --status-todo: #94a3b8;
+  --status-progress: #2563eb;
+  --status-stuck: #d97706;
+  --status-done: #16a34a;
+  --danger: #dc2626; /* at-risk / overdue */
 }
 
-html,
+/* 2. Tell Tailwind about those colors so you can write bg-brand, text-muted, etc. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-todo: var(--status-todo);
+  --color-progress: var(--status-progress);
+  --color-stuck: var(--status-stuck);
+  --color-done: var(--status-done);
+  --color-danger: var(--danger);
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+}
+
+/* 3. Base styles for every page */
 body {
-  background: var(--color-paper);
-  color: var(--color-ink);
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-tap-highlight-color: transparent; /* removes the gray flash when tapping on phones */
+}
+
+button {
+  cursor: pointer;
 }
