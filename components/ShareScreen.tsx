@@ -47,13 +47,13 @@ export function ShareScreen() {
           onClick={() => copy(link, "Link copied!")}
           className="min-h-12 rounded-xl border border-border bg-card px-3 font-medium"
         >
-          🔗 Copy link
+          Copy link
         </button>
         <button
           onClick={() => copy(intro, "Message copied! Paste it in your group chat.")}
           className="min-h-12 rounded-xl bg-brand px-3 font-medium text-brand-foreground"
         >
-          💬 Copy message
+          Copy message
         </button>
       </div>
 
