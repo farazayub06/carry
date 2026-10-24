@@ -7,7 +7,7 @@ import { daysFromNow } from "@/lib/utils";
 import type { DraftTask, PlanResult } from "@/lib/types";
 
 // While Backend's routes aren't ready, keep this true. Set it to false later.
-const USE_MOCK = true;
+const USE_MOCK = false;
 const MAX_TASKS = 12;
 
 const inputClass =

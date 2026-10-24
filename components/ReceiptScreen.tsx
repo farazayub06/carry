@@ -7,7 +7,7 @@ import { buildDemoState } from "@/lib/mock";
 import type { ProjectState, ReceiptRow } from "@/lib/types";
 
 // While Backend's routes aren't ready, keep this true. Set it to false later.
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 // Stand-in for Backend's receipt route: computes the same numbers from the demo data
 function computeMockReceipt(state: ProjectState): ReceiptRow[] {

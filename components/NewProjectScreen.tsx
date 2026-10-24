@@ -6,7 +6,7 @@ import type { CreateProjectInput } from "@/lib/types";
 
 // While Backend's POST /api/projects isn't ready, keep this true. It skips the
 // fetch and sends you to the demo project's plan screen. Set it to false later.
-const USE_MOCK = true;
+const USE_MOCK = false;
 const MAX_MEMBERS = 6;
 
 const inputClass =

@@ -3,21 +3,38 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { buildDemoState } from "@/lib/mock";
+import type { ProjectState } from "@/lib/types";
 
 export function ShareScreen() {
   const { code } = useParams<{ code: string }>();
-  const [state] = useState(buildDemoState); // temporary, replaced by a real fetch later
+  const [projectName, setProjectName] = useState("our group project");
   const [origin, setOrigin] = useState("");
   const [toast, setToast] = useState<string | null>(null);
 
-  // window doesn't exist on the server, so read it after the page loads
+  // window doesn't exist on the server, so read it after the page loads.
+  // Also load the real project name for the invite message.
   useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
+    let cancelled = false;
+    (async () => {
+      const here = window.location.origin;
+      try {
+        const res = await fetch(`/api/p/${code}`, { cache: "no-store" });
+        if (res.ok) {
+          const data: ProjectState = await res.json();
+          if (!cancelled) setProjectName(data.project.name);
+        }
+      } catch {
+        // keep the generic name
+      }
+      if (!cancelled) setOrigin(here);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [code]);
 
   const link = `${origin}/p/${code}`;
-  const intro = `Hey! I set up "${state.project.name}" on Carry so we can split the work fairly. Tap to pick your name and claim tasks: ${link}`;
+  const intro = `Hey! I set up "${projectName}" on Carry so we can split the work fairly. Tap to pick your name and claim tasks: ${link}`;
 
   async function copy(text: string, message: string) {
     try {

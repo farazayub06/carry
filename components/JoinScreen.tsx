@@ -2,21 +2,40 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { buildDemoState } from "@/lib/mock";
+import type { ProjectState } from "@/lib/types";
 
 export function JoinScreen() {
   const { code } = useParams<{ code: string }>();
   const router = useRouter();
-  const [state] = useState(buildDemoState); // temporary, replaced by a real fetch later
+  const [state, setState] = useState<ProjectState | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
 
-  // Check whether this phone already picked a name before
+  // Load the real project, and check whether this phone already picked a name
   useEffect(() => {
-    setSavedId(localStorage.getItem(`carry:me:${code}`));
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/p/${code}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("not found");
+        const data: ProjectState = await res.json();
+        if (cancelled) return;
+        setState(data);
+        setSavedId(localStorage.getItem(`carry:me:${code}`));
+      } catch {
+        if (!cancelled) setNotFound(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [code]);
 
-  // Temporary "not found" check: with mock data, only the demo code exists
-  if (code !== state.project.share_code) {
+  if (!state && !notFound) {
+    return <p className="pt-6 text-muted">Loading…</p>;
+  }
+
+  if (notFound || !state) {
     return (
       <div className="space-y-2 pt-6">
         <h1 className="text-2xl font-bold">Hmm, we can&apos;t find that project</h1>
