@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CreateProjectInput } from "@/lib/types";
+import { PdfUpload } from "@/components/PdfUpload";
 
 const MAX_MEMBERS = 6;
 
@@ -135,27 +136,35 @@ export function NewProjectScreen() {
         )}
       </div>
 
-      <label className="block space-y-1">
-        <span className="text-sm text-muted">Assignment</span>
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="assignment" className="shrink-0 text-sm text-muted">Assignment</label>
+          <PdfUpload onText={setAssignment} />
+        </div>
         <textarea
+          id="assignment"
           value={assignment}
           onChange={(e) => setAssignment(e.target.value)}
           rows={6}
-          placeholder="Paste the assignment prompt from your professor"
+          placeholder="Paste the assignment prompt or upload the PDF"
           className={inputClass}
         />
-      </label>
+      </div>
 
-      <label className="block space-y-1">
-        <span className="text-sm text-muted">Rubric (optional)</span>
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="rubric" className="shrink-0 text-sm text-muted">Rubric (optional)</label>
+          <PdfUpload onText={setRubric} />
+        </div>
         <textarea
+          id="rubric"
           value={rubric}
           onChange={(e) => setRubric(e.target.value)}
           rows={4}
-          placeholder="Paste the grading rubric, one criterion per line"
+          placeholder="Paste the grading rubric (one criterion per line) or upload the PDF"
           className={inputClass}
         />
-      </label>
+      </div>
 
       {error && <p className="text-sm font-medium text-danger">{error}</p>}
 
