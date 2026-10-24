@@ -72,7 +72,7 @@ const GENERIC_TASKS: TaskIdea[] = [
 ];
 
 /** Split a pasted rubric into checklist items, dropping bullets and numbering. */
-function rubricLines(rubric: string): string[] {
+export function rubricLines(rubric: string): string[] {
   return rubric
     .split(/\r?\n/)
     .map((line) => line.replace(/^\s*(?:[-*•▪◦]|\d+[.)]|[a-z][.)])\s*/i, "").trim())
