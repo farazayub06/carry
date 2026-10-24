@@ -2,20 +2,20 @@
 
 :root {
   --background: #1a1a1a;
-  --foreground: #b4bed5;
-  --card: #464a59;
-  --border: #e2e8f0;
-  --muted: #64748b;
+  --foreground: #a3ebff;
+  --card: #565b70;
+  --border: #ffffff;
+  --muted: #c0c0c0;
 
-  --brand: #4f46e5;
-  --brand-foreground: #ffffff;
+  --brand: #1f5fea;
+  --brand-foreground: #a3ebff;
 
   /* Task statuses */
-  --status-todo: #94a3b8;
-  --status-progress: #2563eb;
-  --status-stuck: #d97706;
-  --status-done: #16a34a;
-  --danger: #dc2626; /* at-risk / overdue */
+  --status-todo: #979393;
+  --status-progress: #6781ff;
+  --status-stuck: #c86d2c;
+  --status-done: #4db15c;
+  --danger: #b83636; /* at-risk / overdue */
 }
 
 /* 2. Tell Tailwind about those colors so you can write bg-brand, text-muted, etc. */
