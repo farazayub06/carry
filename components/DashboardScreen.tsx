@@ -7,8 +7,12 @@ import { TaskSheet } from "@/components/TaskSheet";
 import { WorkloadBar } from "@/components/WorkloadBar";
 import { buildDemoState } from "@/lib/mock";
 import Link from "next/link";
-import { isAtRisk, daysUntil } from "@/lib/utils";
-import type { Member, Task, TaskStatus, EventType } from "@/lib/types";
+import type { Member, Task, TaskStatus, EventType, StuckResult } from "@/lib/types";
+import { isAtRisk, daysUntil, lightestMember } from "@/lib/utils";
+
+// While Backend's stuck route isn't ready, keep this true. Set it to false later.
+const USE_MOCK_AI = true;
+
 export function DashboardScreen() {
   const { code } = useParams<{ code: string }>();
   const router = useRouter();
@@ -92,6 +96,45 @@ function confirmTask(task: Task) {
   showToast("Confirmed. Thanks!");
 }
 
+async function getStuckHelp(task: Task): Promise<StuckResult> {
+  // Asking for help means you're stuck, so mark it
+  if (task.status !== "stuck") changeStatus(task, "stuck");
+
+  if (USE_MOCK_AI) {
+    await new Promise((resolve) => setTimeout(resolve, 800)); // pretend the AI is thinking
+    const helper = lightestMember(state.members, state.tasks, task.owner_id ?? undefined);
+    return {
+      source: "ai",
+      substeps: [
+        `Write down exactly what's blocking you on "${task.title}".`,
+        "Pick the smallest piece you could finish in 15 minutes and do only that.",
+        "Ask a teammate for 10 minutes to look at it with you.",
+        "Mark whatever is already done so the group can see your progress.",
+      ],
+      suggest_reassign_to: helper ? helper.id : null,
+      reason: helper
+        ? `${helper.name} has the lightest workload right now, so this might be a good one to hand over.`
+        : "",
+    };
+  }
+
+  const res = await fetch(`/api/tasks/${task.id}/stuck`, { method: "POST" });
+  if (!res.ok) throw new Error("stuck helper failed");
+  return res.json();
+}
+
+function reassignTask(task: Task, toId: string) {
+  updateTask(
+    task.id,
+    { owner_id: toId, status: "not_started", completed_at: null },
+    "claimed",
+    { reassigned_from: task.owner_id, reassigned_to: toId }
+  );
+  const name = state.members.find((m) => m.id === toId)?.name ?? "your teammate";
+  showToast(`Handed to ${name}.`);
+  setSelectedId(null);
+}
+
 async function copyUpdate() {
   try {
     const res = await fetch(`/api/projects/${state.project.id}/update-message`);
@@ -171,16 +214,20 @@ const selectedTask = state.tasks.find((t) => t.id === selectedId);
     <TaskSection title="On track" tasks={onTrack} members={state.members} onSelect={setSelectedId} />
 
     {selectedTask && (
-      <TaskSheet
+    <TaskSheet
+      key={selectedTask.id}
       task={selectedTask}
       owner={state.members.find((m) => m.id === selectedTask.owner_id)}
+      members={state.members}
       meId={meId}
       onClaim={() => claimTask(selectedTask)}
       onStatus={(status) => changeStatus(selectedTask, status)}
       onConfirm={() => confirmTask(selectedTask)}
+      onAskHelp={() => getStuckHelp(selectedTask)}
+      onReassign={(toId) => reassignTask(selectedTask, toId)}
       onClose={() => setSelectedId(null)}
-  />
-)}
+      />
+    )}
 
     {toast && (
       <div className="fixed inset-x-4 bottom-6 mx-auto max-w-md rounded-xl bg-foreground px-4 py-3 text-center text-sm text-background shadow-lg">
