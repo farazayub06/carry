@@ -151,12 +151,12 @@ const selectedTask = state.tasks.find((t) => t.id === selectedId);
       <button
         onClick={copyUpdate}
         className="min-h-12 rounded-xl bg-brand px-3 font-medium text-brand-foreground">
-        📣 Copy update
+        Copy update
       </button>
       <Link
         href={`/p/${code}/share`}
         className="flex min-h-12 items-center justify-center rounded-xl border border-border bg-card px-3 font-medium">
-        🔗 Invite link
+        Invite link
       </Link>
     </div>
 
