@@ -17,18 +17,20 @@ import type { Member, Task } from "./types";
 
 /** A random UUID. Hint: crypto.randomUUID() works in Node and modern browsers. */
 export function newId(): string {
-  // TODO
-  return "todo-id";
+  return crypto.randomUUID();
 }
 
 /**
  * The short code in the share link: /p/<code>.
- * TODO: 6 random characters from an alphabet WITHOUT look-alikes
  * (no 0/o, 1/l/i) so it's easy to read aloud, e.g. "k7x2qp".
  */
 export function newShareCode(): string {
-  // TODO
-  return "todo42";
+  const alphabet = "abcdefghjkmnpqrstuvwxyz23456789"; // no 0, o, 1, l, i
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return code; // e.g. "k7x2qp"
 }
 
 /* ------------------------------- Dates ----------------------------------- */
