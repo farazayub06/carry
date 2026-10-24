@@ -12,7 +12,7 @@ Student group projects run in Snapchat and iMessage group chats, where work gets
 
 ## How Carry works
 
-1. **Create a project.** Paste the assignment and rubric, add teammates, set the due date.
+1. **Create a project.** Paste the assignment and rubric or upload them as PDFs, add teammates, set the due date.
 2. **Review the AI plan.** Claude drafts 6 to 10 specific tasks with effort points (1 to 5) and internal deadlines at least 2 days before the real due date. The group edits anything before saving.
 3. **Share one link.** Paste it into the group chat. Teammates tap their name; there are no accounts.
 4. **Work the dashboard.** Claim tasks, update status, see the workload split, and spot overdue or stuck work. "I'm stuck" returns concrete next steps and suggests the teammate with the lightest load. "Copy update" writes a neutral progress message to paste into the chat, since those apps don't allow bots.
@@ -61,6 +61,7 @@ scripts/          demo seeding and AI key check
 | GET | `/api/projects/[id]/update-message` | Group chat progress update |
 | GET | `/api/projects/[id]/receipt` | Contribution receipt rows |
 | POST | `/api/projects/[id]/rubric-check` | Rubric items no task covers |
+| POST | `/api/extract-pdf` | Text from an uploaded assignment or rubric PDF |
 
 ## Running locally
 
