@@ -1,26 +1,49 @@
+/*
+ * app/globals.css — design tokens + base styles
+ * ---------------------------------------------------------------------------
+ * OWNER: Frontend (+ Product/Design picks the final colors)
+ *
+ * HOW TAILWIND v4 COLORS WORK:
+ * Any --color-* variable inside @theme automatically becomes utility classes:
+ *   --color-accent  →  bg-accent, text-accent, border-accent
+ * Change a color HERE and the whole app updates.
+ *
+ * The values below are PLACEHOLDERS so the app has a look on day one.
+ *
+ * TODO (Product/Design + Frontend):
+ *   [ ] Pick the final brand color for --color-accent
+ *   [ ] Keep status colors as FIXED meanings across the app (never decoration):
+ *       not started = gray · in progress = blue · stuck = amber · done = green · overdue = red
+ *   [ ] (optional) add a bottom-sheet slide-up animation for components/TaskSheet.tsx
+ */
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* Brand (placeholder) */
+  --color-accent: #e4572e;
+  --color-accent-soft: #fdebe5;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* Neutrals */
+  --color-paper: #faf8f5; /* page background */
+  --color-card: #ffffff; /*  cards / sheets */
+  --color-ink: #1c1917; /*   main text */
+  --color-muted: #78716c; /* secondary text */
+  --color-line: #e7e5e4; /*  borders + dividers */
+
+  /* Status (fixed meanings) */
+  --color-todo: #a8a29e;
+  --color-doing: #2563eb;
+  --color-stuck: #d97706;
+  --color-done: #16a34a;
+  --color-late: #dc2626;
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
 }

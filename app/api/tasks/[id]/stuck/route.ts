@@ -1,0 +1,30 @@
+/**
+ * POST /api/tasks/[id]/stuck — "I'm stuck, help me"
+ * ---------------------------------------------------------------------------
+ * OWNER: Backend
+ * CALLED BY: the "I'm stuck, help me" button in TaskSheet. AI owns lib/ai/stuck.ts
+ *
+ * BODY:    none
+ * RETURNS: StuckResult { substeps[], suggest_reassign_to (member id | null), reason, source }
+ * Read-only: it SUGGESTS. If the group agrees, the helper taps Claim.
+ *
+ * TODO (Backend):
+ *   [ ] task = await store.getTask(id) → 404 if missing
+ *   [ ] state = await store.getStateById(task.project_id)
+ *   [ ] return helpStuck(task, state)  (from @/lib/ai/stuck)
+ *
+ * ALL ROUTES, SHARED RULES (Backend):
+ *   - Read params with `const { id } = await ctx.params;` (params is a Promise in this Next.js version)
+ *   - Read the body with `await req.json()` (wrap in try/catch → 400 if it isn't JSON)
+ *   - Talk to the database ONLY through `store` from "@/lib/db" (never Supabase directly)
+ *   - Success → `Response.json(data)`; errors → `Response.json({ error: "message" }, { status: 400/404 })`
+ *     (tip: write one small `handle()` wrapper so every route does this the same way;
+ *      catch StoreError from "@/lib/db" and use its .status)
+ *   - Until this route is done it returns 501 "Not implemented", so the frontend can see what's missing
+ */
+
+export async function POST(_req: Request, ctx: RouteContext<"/api/tasks/[id]/stuck">) {
+  const { id } = await ctx.params;
+  // TODO: implement (see the comment above)
+  return Response.json({ error: `Not implemented yet: POST /api/tasks/[id]/stuck (id=${id})` }, { status: 501 });
+}
