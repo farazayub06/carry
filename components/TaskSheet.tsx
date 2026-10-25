@@ -133,7 +133,7 @@ export function TaskSheet({
             disabled={helping}
             className="min-h-12 w-full rounded-xl border border-stuck font-medium text-stuck disabled:opacity-60"
           >
-            {helping ? "Thinking…" : "🆘 I'm stuck, help me"}
+            {helping ? "Thinking…" : "I'm stuck, help me"}
           </button>
         )}
 
