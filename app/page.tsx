@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const STEPS = [
   { title: "Paste the assignment", body: "Carry's AI turns the prompt and rubric into a fair plan with effort points and early deadlines." },
-  { title: "Share one link", body: "Drop it in your Snapchat or iMessage group chat. Everyone taps their name. No accounts." },
+  { title: "Share one link", body: "Drop it in your Snapchat or iMessage group chat. Everyone taps their name to join." },
   { title: "Carry keeps it moving", body: "Claim tasks, update status, get unstuck, and copy a friendly progress update into the chat." },
   { title: "Get the receipt", body: "A contribution receipt built from the activity log shows who actually did the work." },
 ];
